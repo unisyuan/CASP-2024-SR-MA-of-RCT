@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="zh-Hant-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CASP SR/MA 互動式文獻評讀系統 | Critical Appraisal Guide</title>
+  <!-- SEO Meta -->
+  <meta name="description" content="本系統基於 CASP 評讀工具，提供繁體中文與英文對照的系統性文獻回顧與統合分析 (SR/MA) 互動式評讀教學。支援 PDF 文獻上傳對照與範文高亮引導。">
+  <!-- Stylesheets -->
+  <link rel="stylesheet" href="styles.css">
+  <!-- PDF.js CDN -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+</head>
+<body data-theme="light">
+
+  <!-- App Header -->
+  <header class="app-header">
+    <div class="brand">
+      <div class="logo-icon">C</div>
+      <h1>
+        CASP SR/MA 互動式文獻評讀系統
+        <span>Critical Appraisal Skills Programme - Systematic Reviews & Meta-Analyses</span>
+      </h1>
+    </div>
+    
+    <div class="header-controls">
+      <!-- Progress Indicator -->
+      <div class="header-progress">
+        <span class="progress-text">評讀進度: <span id="progress-percent">0%</span></span>
+        <div class="progress-bar-container">
+          <div class="progress-bar-fill" id="progress-fill"></div>
+        </div>
+      </div>
+      
+      <!-- Theme Switcher -->
+      <button class="btn btn-icon" id="theme-toggle" title="切換深淺色主題">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>
+        </svg>
+      </button>
+
+      <!-- Reset Progress -->
+      <button class="btn" id="btn-reset" title="清除所有紀錄並重設">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
+          <path d="M3 3v5h5"/>
+        </svg>
+        重設
+      </button>
+
+      <!-- View Report -->
+      <button class="btn btn-accent" id="btn-show-report" title="產生完整評讀報告">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/>
+          <polyline points="14 2 14 8 20 8"/>
+          <line x1="16" y1="13" x2="8" y2="13"/>
+          <line x1="16" y1="17" x2="8" y2="17"/>
+          <line x1="10" y1="9" x2="8" y2="9"/>
+        </svg>
+        產生報告
+      </button>
+    </div>
+  </header>
+
+  <!-- App Workspace -->
+  <main class="app-container">
+    
+    <!-- Left Pane (Document Viewer) -->
+    <div class="left-pane">
+      <div class="doc-source-banner">
+        <div class="banner-title">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--primary);"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"/><path d="M6 6h10M6 10h10"/></svg>
+          <span id="active-doc-label">正在閱讀：內建教學範例文獻 (Aspirin SR/MA)</span>
+        </div>
+        <div class="banner-actions">
+          <button class="btn btn-sm" id="btn-show-sample" style="display: none;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"/></svg>
+            閱讀教學範文
+          </button>
+          <button class="btn btn-accent btn-sm" id="btn-show-uploaded" style="display: none;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/></svg>
+            檢視已上傳文獻
+          </button>
+          <button class="btn btn-primary btn-sm" id="btn-quick-upload">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            <span id="upload-btn-text">上傳自訂文獻 (PDF)</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="pane-content" id="left-pane-content">
+        <!-- Mock Paper Content (Shown by default) -->
+        <div id="mock-paper-view" class="active-content">
+          <!-- Populated by data.js -->
+        </div>
+
+        <!-- PDF Reader Content (Hidden initially) -->
+        <div id="pdf-reader-view" style="display: none; height: 100%; flex-direction: column;">
+          <!-- Dropzone -->
+          <div class="pdf-upload-zone" id="pdf-drop-zone">
+            <div class="upload-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M4 4v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8.342a2 2 0 0 0-.586-1.414l-4.342-4.342A2 2 0 0 0 13.658 2H6a2 2 0 0 0-2 2z"/>
+                <path d="M14 2v4a2 2 0 0 0 2 2h4M12 18v-6M9 15l3-3 3 3"/>
+              </svg>
+            </div>
+            <h3>拖曳 PDF 檔案至此處</h3>
+            <p>或點選下方按鈕上傳您要評讀的學術文獻 (SR/MA PDF)</p>
+            <input type="file" id="pdf-file-input" accept="application/pdf" style="display: none;">
+            <button class="btn btn-primary" onclick="document.getElementById('pdf-file-input').click()">選擇 PDF 檔案</button>
+          </div>
+
+          <!-- PDF Viewer (Active after upload) -->
+          <div id="pdf-viewer-wrap" style="display: none; height: 100%; flex-direction: column;">
+            <div class="pdf-controls">
+              <div class="pdf-page-nav">
+                <button class="btn btn-icon" id="pdf-prev" title="上一頁">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+                </button>
+                <span class="pdf-page-num">第 <span id="pdf-page-num">1</span> 頁 / 共 <span id="pdf-page-count">?</span> 頁</span>
+                <button class="btn btn-icon" id="pdf-next" title="下一頁">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+                </button>
+              </div>
+              
+              <div class="pdf-zoom-controls">
+                <button class="btn btn-icon" id="pdf-zoom-out" title="縮小">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                </button>
+                <span id="pdf-zoom-text" style="font-size: 0.85rem; font-weight: 500;">100%</span>
+                <button class="btn btn-icon" id="pdf-zoom-in" title="放大">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                </button>
+              </div>
+            </div>
+            
+            <div class="pdf-render-container" id="pdf-container">
+              <!-- Rendered canvas elements will go here -->
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Right Pane (Appraisal Wizard) -->
+    <div class="right-pane">
+      
+      <!-- Stepper Navigation -->
+      <nav class="appraisal-nav">
+        <div class="question-stepper" id="stepper-container">
+          <!-- Populated by app.js: 1, 2, 3a, 3b, etc. -->
+        </div>
+      </nav>
+
+      <!-- Appraisal Body -->
+      <div class="appraisal-body" id="appraisal-body-content">
+        
+        <!-- Active Question Mode -->
+        <div id="question-mode-view">
+          <span class="section-indicator" id="section-badge">Section A</span>
+          <h2 class="section-title-sm" id="section-title-text">A. 研究設計是否有效？</h2>
+          
+          <div class="question-card">
+            <h3 class="question-title" id="q-title">加載中...</h3>
+            <span class="question-title-en" id="q-title-en">Loading...</span>
+            
+            <div class="target-hint">
+              <h4 id="q-hint-header">🔍 建議尋找章節</h4>
+              <p id="q-hint-text">加載提示中...</p>
+            </div>
+            
+            <!-- AI Text Extraction and Page Detection Box -->
+            <div class="ai-detection-box" id="ai-detection-container" style="display: none;">
+              <!-- Populated dynamically by app.js -->
+            </div>
+          </div>
+
+          <!-- Considerations List -->
+          <div class="considerations-section">
+            <h4 class="section-title-sm">💡 思考要點 (Considerations)</h4>
+            <div id="considerations-list">
+              <!-- Populated by app.js -->
+            </div>
+          </div>
+
+          <!-- Appraisal Response Buttons -->
+          <div class="decision-section">
+            <h4 class="section-title-sm">📝 您的評估決策 (Your Appraisal)</h4>
+            <div class="decision-buttons">
+              <button class="decision-btn decision-btn-yes" id="btn-decision-yes">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                是 (Yes)
+                <span>方法學妥當</span>
+              </button>
+              <button class="decision-btn decision-btn-cant" id="btn-decision-cant">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                無法判斷 (Can't Tell)
+                <span>資訊揭露不足</span>
+              </button>
+              <button class="decision-btn decision-btn-no" id="btn-decision-no">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                否 (No)
+                <span>具明顯缺陷</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Notes / Evidence Input -->
+          <div class="notes-section">
+            <h4 class="section-title-sm">✍️ 佐證依據與筆記 (Evidence & Notes)</h4>
+            <textarea class="notes-textarea" id="notes-input" placeholder="請在此處輸入該文獻的佐證內容、數據，或您的評讀心得筆記..."></textarea>
+          </div>
+        </div>
+
+        <!-- Dashboard View (Shown at the end / Summary Step) -->
+        <div id="dashboard-mode-view" style="display: none;">
+          <h2 class="dashboard-title">評讀完成！總結面板</h2>
+          <p class="dashboard-description">請檢視您對 10 道問題的評估狀態，並填寫最終的臨床決策結論。</p>
+          
+          <div class="summary-grid" id="dashboard-summary-grid">
+            <!-- Populated dynamically by app.js -->
+          </div>
+
+          <!-- Conclusion Card -->
+          <div class="conclusion-card">
+            <h3>整體結論：此文獻是否可用於支持臨床決策？</h3>
+            <p style="font-size: 0.88rem; color: var(--text-secondary); margin-bottom: 16px;">
+              綜合考慮研究的方法學嚴謹度、異質性、偏倚風險以及在地的適用性，判斷本篇 SR/MA 的結論是否可信並可直接實施。
+            </p>
+            
+            <div class="decision-buttons" style="margin-bottom: 20px;">
+              <button class="decision-btn decision-btn-yes" id="btn-final-yes">
+                是 (Yes)
+                <span>推薦用於臨床</span>
+              </button>
+              <button class="decision-btn decision-btn-cant" id="btn-final-cant">
+                需謹慎 (Cautious)
+                <span>有限度地參考</span>
+              </button>
+              <button class="decision-btn decision-btn-no" id="btn-final-no">
+                否 (No)
+                <span>不建議採納</span>
+              </button>
+            </div>
+
+            <h4 class="section-title-sm">結論佐證與臨床實行建议</h4>
+            <textarea class="notes-textarea" id="final-notes-input" placeholder="請填寫您的綜合評價、本篇論文的核心價值或侷限性，以及對未來臨床應用的建議..."></textarea>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Appraisal Footer -->
+      <footer class="appraisal-footer">
+        <button class="btn" id="btn-prev">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+          上一題
+        </button>
+        
+        <span style="font-size: 0.85rem; color: var(--text-secondary); font-weight: 500;" id="question-index-display">第 1 / 18 題</span>
+        
+        <button class="btn btn-primary" id="btn-next">
+          下一題
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+        </button>
+      </footer>
+    </div>
+  </main>
+
+  <!-- Printable Report Overlay Modal -->
+  <div class="modal-overlay" id="report-modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 class="modal-title">CASP 系統性文獻回顧/統合分析 評讀報告</h2>
+        <div style="display: flex; gap: 8px;">
+          <button class="btn" id="btn-print-report">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+            列印 PDF
+          </button>
+          <button class="btn btn-accent" id="btn-download-md">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            下載 Markdown
+          </button>
+          <button class="modal-close" id="btn-close-modal">&times;</button>
+        </div>
+      </div>
+      <div class="modal-body" id="report-modal-body">
+        <!-- Rendered Report Content will go here -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="data.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

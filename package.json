@@ -1,0 +1,13 @@
+{
+  "name": "casp-appraisal-web",
+  "version": "1.0.0",
+  "description": "CASP Systematic Review & Meta-Analysis Interactive Critical Appraisal System",
+  "main": "index.html",
+  "scripts": {
+    "start": "npx http-server ./ -p 3000 -o"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "http-server": "^14.1.1"
+  }
+}
