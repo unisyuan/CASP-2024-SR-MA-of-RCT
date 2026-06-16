@@ -30,6 +30,11 @@ const elements = {
   progressPercent: document.getElementById("progress-percent"),
   progressFill: document.getElementById("progress-fill"),
   
+  // Mobile Switcher Tabs
+  mobileTabBar: document.getElementById("mobile-tab-bar"),
+  btnTabDoc: document.getElementById("btn-tab-doc"),
+  btnTabAppraisal: document.getElementById("btn-tab-appraisal"),
+  
   // Document Source Banner Buttons
   btnQuickUpload: document.getElementById("btn-quick-upload"),
   btnShowSample: document.getElementById("btn-show-sample"),
@@ -104,6 +109,7 @@ document.addEventListener("DOMContentLoaded", () => {
   setupEventListeners();
   showCurrentStep();
   applyTheme();
+  switchMobileTab("appraisal"); // Default to appraisal form on mobile
 });
 
 // Load state from localStorage
@@ -158,6 +164,23 @@ function applyTheme() {
         <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>
       </svg>
     `;
+  }
+}
+
+// Switch mobile tab view
+function switchMobileTab(tabName) {
+  if (!elements.btnTabDoc || !elements.btnTabAppraisal) return;
+  
+  if (tabName === "doc") {
+    document.body.classList.add("show-doc-pane");
+    document.body.classList.remove("show-appraisal-pane");
+    elements.btnTabDoc.classList.add("active");
+    elements.btnTabAppraisal.classList.remove("active");
+  } else if (tabName === "appraisal") {
+    document.body.classList.add("show-appraisal-pane");
+    document.body.classList.remove("show-doc-pane");
+    elements.btnTabAppraisal.classList.add("active");
+    elements.btnTabDoc.classList.remove("active");
   }
 }
 
@@ -380,6 +403,11 @@ function showCurrentStep() {
   
   // Scroll right pane body to top
   elements.appraisalBodyContent.scrollTop = 0;
+
+  // Auto-redirect to appraisal form on mobile layout when switching steps
+  if (window.innerWidth <= 768) {
+    switchMobileTab("appraisal");
+  }
 }
 
 // Reset Decision Buttons Classes
@@ -495,6 +523,14 @@ function handleFinalDecision(choice) {
 
 // Setup all DOM interaction listeners
 function setupEventListeners() {
+  // Mobile Switcher Tabs
+  elements.btnTabDoc.addEventListener("click", () => {
+    switchMobileTab("doc");
+  });
+  elements.btnTabAppraisal.addEventListener("click", () => {
+    switchMobileTab("appraisal");
+  });
+
   // Theme Toggle
   elements.themeToggle.addEventListener("click", () => {
     const theme = document.body.getAttribute("data-theme") === "dark" ? "light" : "dark";
@@ -681,6 +717,20 @@ function setupEventListeners() {
   });
   
   elements.btnDownloadMd.addEventListener("click", downloadMarkdownReport);
+
+  // Target Hint click listener to switch to document tab (mobile) and scroll to highlight
+  const targetHintBlock = document.querySelector(".target-hint");
+  if (targetHintBlock) {
+    targetHintBlock.addEventListener("click", () => {
+      if (window.innerWidth <= 768) {
+        switchMobileTab("doc");
+      }
+      const q = window.APPRAISAL_QUESTIONS[state.currentQuestionIndex];
+      if (q && q.mockPaperHighlightId) {
+        triggerMockHighlight(q.mockPaperHighlightId);
+      }
+    });
+  }
 }
 
 // Load PDF File arraybuffer and parse
@@ -1170,6 +1220,11 @@ window.goToPdfPage = function(pageNum) {
   if (pdfDoc && pageNum >= 1 && pageNum <= pdfDoc.numPages) {
     pdfPageNum = pageNum;
     queueRenderPage(pdfPageNum);
+    
+    // Auto-switch to document tab on mobile
+    if (window.innerWidth <= 768) {
+      switchMobileTab("doc");
+    }
   }
 };
 
